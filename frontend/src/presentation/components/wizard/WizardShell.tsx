@@ -1,4 +1,5 @@
 'use client';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -7,6 +8,7 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useWizard } from '@/presentation/hooks/useWizard';
 import type { BusinessInfo } from '@/domain/entities/BusinessInfo';
 import QuestionCard from './QuestionCard';
@@ -15,6 +17,7 @@ import CategorySelector from './CategorySelector';
 
 export default function WizardShell() {
   const router = useRouter();
+  const [categoryError, setCategoryError] = useState(false);
 
   const handleGenerate = (answers: Partial<BusinessInfo>) => {
     sessionStorage.setItem('wizardAnswers', JSON.stringify(answers));
@@ -23,11 +26,25 @@ export default function WizardShell() {
 
   const {
     currentQuestion, rawAnswers, answeredFields, selectedCategory,
-    isLoadingQuestion, isDone, error, editingField,
-    selectCategory, submitAnswer, skip, editQuestion, generate,
+    isLoadingQuestion, isDone, error, editingField, canGoBack,
+    selectCategory, submitAnswer, skip, goBack, editQuestion, generate,
   } = useWizard(handleGenerate);
 
   const canGenerate = !!rawAnswers.name?.trim() || answeredFields.length > 0;
+
+  const handleSelectCategory = useCallback((label: string) => {
+    setCategoryError(false);
+    selectCategory(label);
+  }, [selectCategory]);
+
+  const handleAnswer = useCallback((value: string) => {
+    if (answeredFields.length === 0 && !selectedCategory) {
+      setCategoryError(true);
+      return;
+    }
+    setCategoryError(false);
+    submitAnswer(value);
+  }, [answeredFields.length, selectedCategory, submitAnswer]);
 
   return (
     <Box sx={{ position: 'relative' }}>
@@ -77,8 +94,12 @@ export default function WizardShell() {
         }}
       >
         <CardContent sx={{ p: { xs: 3, md: 5 } }}>
-          {/* Category selector — always visible at top */}
-          <CategorySelector selected={selectedCategory} onSelect={selectCategory} />
+          {/* Category selector */}
+          <CategorySelector
+            selected={selectedCategory}
+            onSelect={handleSelectCategory}
+            showError={categoryError}
+          />
 
           {/* Header row */}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
@@ -86,16 +107,30 @@ export default function WizardShell() {
               Tell us about your business
             </Typography>
             {!isDone && !isLoadingQuestion && currentQuestion && (
-              <Button
-                size="small"
-                variant="text"
-                color="inherit"
-                endIcon={<SkipNextIcon />}
-                onClick={skip}
-                sx={{ color: 'text.secondary', fontSize: '0.8rem' }}
-              >
-                Skip
-              </Button>
+              <Box sx={{ display: 'flex', gap: 0.5 }}>
+                {canGoBack && (
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="inherit"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={goBack}
+                    sx={{ color: 'text.secondary', fontSize: '0.8rem' }}
+                  >
+                    Back
+                  </Button>
+                )}
+                <Button
+                  size="small"
+                  variant="text"
+                  color="inherit"
+                  endIcon={<SkipNextIcon />}
+                  onClick={skip}
+                  sx={{ color: 'text.secondary', fontSize: '0.8rem' }}
+                >
+                  Skip
+                </Button>
+              </Box>
             )}
           </Box>
 
@@ -125,7 +160,7 @@ export default function WizardShell() {
               field={currentQuestion?.field}
               isLoading={isLoadingQuestion}
               error={error}
-              onAnswer={submitAnswer}
+              onAnswer={handleAnswer}
               initialValue={editingField ? rawAnswers[editingField] : undefined}
               isEditing={!!editingField}
             />

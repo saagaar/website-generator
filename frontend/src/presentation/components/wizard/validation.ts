@@ -5,8 +5,7 @@ export const fieldValidators: Record<string, Validator> = {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
       ? null
       : 'Please enter a valid email address',
-  phone: v =>
-    /^[\d\s+\-()\\.]{7,}$/.test(v.trim())
-      ? null
-      : 'Please enter a valid phone number',
 };
+
+export const isValidUrl = (v: string): boolean =>
+  /^(https?:\/\/)?([\w-]+\.)+[\w-]{2,}(\/\S*)?$/.test(v.trim());

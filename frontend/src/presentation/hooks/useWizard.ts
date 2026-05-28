@@ -18,6 +18,7 @@ interface WizardState {
   editingField: string | null;
   preEditQuestion: WizardQuestion | null;
   preEditDone: boolean;
+  questionHistory: WizardQuestion[];
 }
 
 export interface UseWizardReturn {
@@ -29,14 +30,15 @@ export interface UseWizardReturn {
   isDone: boolean;
   error: string | null;
   editingField: string | null;
+  canGoBack: boolean;
   selectCategory: (label: string) => void;
   submitAnswer: (value: string) => void;
   skip: () => void;
+  goBack: () => void;
   editQuestion: (field: string) => void;
   generate: () => void;
 }
 
-// Pure state transform — no setState calls inside, safe to use inside setState callbacks
 function advanceQueue(
   s: WizardState,
   rawAnswers: RawAnswers,
@@ -53,7 +55,6 @@ function advanceQueue(
       isLoadingQuestion: false,
     };
   }
-  // Static queue exhausted — signal Ollama fetch needed via isLoadingQuestion
   return {
     ...s,
     rawAnswers,
@@ -125,10 +126,9 @@ export function useWizard(onGenerate: (answers: Partial<BusinessInfo>) => void):
     editingField: null,
     preEditQuestion: null,
     preEditDone: false,
+    questionHistory: [],
   });
 
-  // Ollama fetch is a side effect — triggered by isLoadingQuestion becoming true.
-  // Using useEffect keeps it out of setState callbacks (fixing StrictMode double-invoke bug).
   useEffect(() => {
     if (!state.isLoadingQuestion) return;
 
@@ -201,7 +201,8 @@ export function useWizard(onGenerate: (answers: Partial<BusinessInfo>) => void):
 
       const isStatic = s.staticIndex < STATIC_QUESTIONS.length;
       const nextIndex = isStatic ? s.staticIndex + 1 : s.staticIndex;
-      return advanceQueue(s, newAnswers, newFields, nextIndex);
+      const newHistory = [...s.questionHistory, s.currentQuestion];
+      return { ...advanceQueue(s, newAnswers, newFields, nextIndex), questionHistory: newHistory };
     });
   }, []);
 
@@ -220,7 +221,25 @@ export function useWizard(onGenerate: (answers: Partial<BusinessInfo>) => void):
       }
       const isStatic = s.staticIndex < STATIC_QUESTIONS.length;
       const nextIndex = isStatic ? s.staticIndex + 1 : s.staticIndex;
-      return advanceQueue(s, s.rawAnswers, s.answeredFields, nextIndex);
+      const newHistory = [...s.questionHistory, s.currentQuestion];
+      return { ...advanceQueue(s, s.rawAnswers, s.answeredFields, nextIndex), questionHistory: newHistory };
+    });
+  }, []);
+
+  const goBack = useCallback(() => {
+    setState(s => {
+      if (s.questionHistory.length === 0) return s;
+      const newHistory = [...s.questionHistory];
+      const prevQuestion = newHistory.pop()!;
+      const staticIdx = STATIC_QUESTIONS.findIndex(q => q.field === prevQuestion.field);
+      return {
+        ...s,
+        currentQuestion: prevQuestion,
+        questionHistory: newHistory,
+        isDone: false,
+        isLoadingQuestion: false,
+        staticIndex: staticIdx >= 0 ? staticIdx : STATIC_QUESTIONS.length,
+      };
     });
   }, []);
 
@@ -252,9 +271,11 @@ export function useWizard(onGenerate: (answers: Partial<BusinessInfo>) => void):
     isDone: state.isDone,
     error: state.error,
     editingField: state.editingField,
+    canGoBack: state.questionHistory.length > 0,
     selectCategory,
     submitAnswer,
     skip,
+    goBack,
     editQuestion,
     generate,
   };

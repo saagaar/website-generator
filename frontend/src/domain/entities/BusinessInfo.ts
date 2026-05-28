@@ -1,6 +1,7 @@
 export interface TeamMember {
   name: string;
   role: string;
+  imageDataUrl?: string;
 }
 
 export interface Testimonial {

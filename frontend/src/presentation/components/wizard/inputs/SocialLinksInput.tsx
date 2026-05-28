@@ -5,9 +5,11 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
+import FormHelperText from '@mui/material/FormHelperText';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { isValidUrl } from '../validation';
 
 interface LinkRow {
   platform: string;
@@ -30,55 +32,77 @@ function parseInitial(raw?: string): LinkRow[] {
 
 export default function SocialLinksInput({ onSubmit, initialValue }: Props) {
   const [rows, setRows] = useState<LinkRow[]>(parseInitial(initialValue));
+  const [urlErrors, setUrlErrors] = useState<boolean[]>(() => parseInitial(initialValue).map(() => false));
 
-  const update = (i: number, field: keyof LinkRow, val: string) =>
+  const update = (i: number, field: keyof LinkRow, val: string) => {
     setRows(r => r.map((row, idx) => (idx === i ? { ...row, [field]: val } : row)));
+    if (field === 'url') setUrlErrors(e => e.map((err, idx) => (idx === i ? false : err)));
+  };
 
-  const add = () => setRows(r => [...r, { platform: '', url: '' }]);
-  const remove = (i: number) => setRows(r => r.filter((_, idx) => idx !== i));
+  const add = () => {
+    setRows(r => [...r, { platform: '', url: '' }]);
+    setUrlErrors(e => [...e, false]);
+  };
+
+  const remove = (i: number) => {
+    setRows(r => r.filter((_, idx) => idx !== i));
+    setUrlErrors(e => e.filter((_, idx) => idx !== i));
+  };
 
   const handleSubmit = () => {
+    const errors = rows.map(r => r.url.trim() !== '' && !isValidUrl(r.url));
+    setUrlErrors(errors);
+    if (errors.some(Boolean)) return;
     const valid = rows.filter(r => r.platform.trim() || r.url.trim());
     if (valid.length === 0) return;
     onSubmit(JSON.stringify(valid));
   };
 
   const canSubmit = rows.some(r => r.platform.trim() || r.url.trim());
+  const filledCount = rows.filter(r => r.platform.trim() || r.url.trim()).length;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       {rows.map((row, i) => (
-        <Box
-          key={i}
-          sx={{
-            display: 'flex',
-            gap: 1,
-            alignItems: 'center',
-            bgcolor: 'background.default',
-            borderRadius: '12px',
-            p: 1.5,
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <TextField
-            size="small"
-            placeholder="Platform (e.g. Instagram)"
-            value={row.platform}
-            onChange={e => update(i, 'platform', e.target.value)}
-            sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#fff' } }}
-          />
-          <TextField
-            size="small"
-            placeholder="URL or handle"
-            value={row.url}
-            onChange={e => update(i, 'url', e.target.value)}
-            sx={{ flex: 2, '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#fff' } }}
-          />
-          {rows.length > 1 && (
-            <IconButton size="small" onClick={() => remove(i)} sx={{ color: 'text.secondary' }}>
-              <DeleteOutlineIcon fontSize="small" />
-            </IconButton>
+        <Box key={i} sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              alignItems: 'center',
+              bgcolor: 'background.default',
+              borderRadius: '12px',
+              p: 1.5,
+              border: '1px solid',
+              borderColor: urlErrors[i] ? 'error.main' : 'divider',
+              transition: 'border-color 0.15s',
+            }}
+          >
+            <TextField
+              size="small"
+              placeholder="Platform (e.g. Instagram)"
+              value={row.platform}
+              onChange={e => update(i, 'platform', e.target.value)}
+              sx={{ flex: 1, '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#fff' } }}
+            />
+            <TextField
+              size="small"
+              placeholder="https://instagram.com/mybiz"
+              value={row.url}
+              onChange={e => update(i, 'url', e.target.value)}
+              error={urlErrors[i]}
+              sx={{ flex: 2, '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#fff' } }}
+            />
+            {rows.length > 1 && (
+              <IconButton size="small" onClick={() => remove(i)} sx={{ color: 'text.secondary' }}>
+                <DeleteOutlineIcon fontSize="small" />
+              </IconButton>
+            )}
+          </Box>
+          {urlErrors[i] && (
+            <FormHelperText error sx={{ ml: 2 }}>
+              Enter a valid URL (e.g. https://instagram.com/mybiz)
+            </FormHelperText>
           )}
         </Box>
       ))}
@@ -94,7 +118,7 @@ export default function SocialLinksInput({ onSubmit, initialValue }: Props) {
           Add link
         </Button>
         <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
-          {rows.filter(r => r.platform.trim() || r.url.trim()).length} link{rows.filter(r => r.platform.trim() || r.url.trim()).length !== 1 ? 's' : ''} added
+          {filledCount} link{filledCount !== 1 ? 's' : ''} added
         </Typography>
         <Button
           variant="contained"

@@ -6,12 +6,16 @@ import AnswerInput from './AnswerInput';
 import ServiceListInput from './inputs/ServiceListInput';
 import TeamListInput from './inputs/TeamListInput';
 import SocialLinksInput from './inputs/SocialLinksInput';
+import PhoneInput from './inputs/PhoneInput';
+import ColorPickerInput from './inputs/ColorPickerInput';
 import { fieldValidators } from './validation';
 
 const MULTI_VALUE_FIELDS: Record<string, React.ComponentType<{ onSubmit: (v: string) => void; initialValue?: string }>> = {
   services: ServiceListInput,
   team: TeamListInput,
   socialLinks: SocialLinksInput,
+  phone: PhoneInput,
+  colorTheme: ColorPickerInput,
 };
 
 interface Props {
