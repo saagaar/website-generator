@@ -1,12 +1,8 @@
-'use client';
 import Box from '@mui/material/Box';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
 import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SectionHeading from '@/presentation/components/ui/SectionHeading';
 import PillButton from '@/presentation/components/ui/PillButton';
+import FaqAccordionClient from '@/presentation/components/landing/FaqAccordionClient';
 
 const FAQS = [
   { q: 'Do I need to know how to code?', a: 'Not at all. SiteGen is built specifically for people who have no technical background. You just describe your business in plain language and we handle everything else.' },
@@ -24,17 +20,8 @@ export default function FaqPage() {
     <Box sx={{ bgcolor: 'background.default', py: { xs: 8, md: 12 } }}>
       <Box sx={{ maxWidth: 760, mx: 'auto', px: { xs: 3, md: 6 } }}>
         <SectionHeading title="Frequently asked questions" subtitle="Everything you need to know about SiteGen." />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 8 }}>
-          {FAQS.map((faq) => (
-            <Accordion key={faq.q} disableGutters>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{faq.q}</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>{faq.a}</Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
+        <Box sx={{ mb: 8 }}>
+          <FaqAccordionClient faqs={FAQS} />
         </Box>
         <Box sx={{ textAlign: 'center' }}>
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>

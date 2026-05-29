@@ -1,11 +1,6 @@
-'use client';
 import Box from '@mui/material/Box';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import Typography from '@mui/material/Typography';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SectionHeading from '@/presentation/components/ui/SectionHeading';
+import FaqAccordionClient from './FaqAccordionClient';
 
 const FAQS = [
   {
@@ -35,20 +30,7 @@ export default function FaqSection() {
     <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'background.paper' }}>
       <Box sx={{ maxWidth: 760, mx: 'auto', px: { xs: 3, md: 6 } }}>
         <SectionHeading title="Frequently asked questions" />
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {FAQS.map((faq) => (
-            <Accordion key={faq.q} disableGutters>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ py: 0.5 }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>{faq.q}</Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                  {faq.a}
-                </Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Box>
+        <FaqAccordionClient faqs={FAQS} />
       </Box>
     </Box>
   );
